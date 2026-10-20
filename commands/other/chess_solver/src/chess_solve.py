@@ -45,8 +45,8 @@ def main():
 
             tiles, _ = chessboard_finder.findGrayscaleTilesInImage(img)
             if tiles is None:
-                print("Couldn't find chessboard in image.")
-                sys.exit(1)
+                print("NO_CHESSBOARD: Couldn't find a chessboard in the image.")
+                sys.exit(2)
             fen, _ = predictor.get_prediction(tiles)
         finally:
             predictor.close()

@@ -113,18 +113,25 @@ module.exports = {
                     files: [solvedAttachment],
                 });
             } catch (processingError) {
-                console.error("Processing error:", processingError);
-                await interaction.editReply("An error occurred or no chessboard was detected in the image.");
+                throw new Error("Failed to prepare or send the chess analysis result.", {
+                    cause: processingError,
+                });
             }
         } catch (error) {
             console.error("Chess solver error:", error);
 
+            const noChessboardFound =
+                error instanceof Error && error.message.includes("NO_CHESSBOARD:");
+            const userMessage = noChessboardFound
+                ? "No chessboard was found in that image. Upload a clear image showing the complete board and try again."
+                : "The chess solver encountered an error while processing your image. Please try again with a clear board image. If the problem continues, contact an administrator.";
+
             try {
                 if (interaction.deferred) {
-                    await interaction.editReply("An unexpected error occurred while processing your chess image.");
+                    await interaction.editReply(userMessage);
                 } else {
                     await interaction.reply({
-                        content: "An unexpected error occurred while processing your chess image.",
+                        content: userMessage,
                         ephemeral: true,
                     });
                 }
