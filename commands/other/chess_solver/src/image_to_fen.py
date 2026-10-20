@@ -1,11 +1,13 @@
-import os
 import re
 import argparse
 import numpy as np
-import PIL.Image
 import tensorflow as tf
 import load_image
 import chessboard_finder
+
+import os, sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import IMAGE_PATH
 
 
@@ -42,7 +44,11 @@ def load_graph(model_filepath: str) -> tf.Graph:
 
 
 class ChessboardPredictor:
-    def __init__(self, model_path: str = "saved_models/model.pb"):
+    def __init__(self, model_path: str = None):
+        from config import MODEL_PATH
+
+        if model_path is None:
+            model_path = MODEL_PATH
         graph = load_graph(model_path)
         self.sess = tf.compat.v1.Session(graph=graph)
         self.x = graph.get_tensor_by_name("tcb/Input:0")
@@ -93,13 +99,17 @@ class ChessboardPredictor:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Extract FEN from a chessboard image')
-    parser.add_argument('--invert_fen', action='store_true', help='Invert FEN so white pieces are on bottom')
+    parser = argparse.ArgumentParser(description="Extract FEN from a chessboard image")
+    parser.add_argument(
+        "--invert_fen",
+        action="store_true",
+        help="Invert FEN so white pieces are on bottom",
+    )
     args = parser.parse_args()
-    
+
     unflip = args.invert_fen
     active = "w"
-    
+
     img = load_image.load_image(IMAGE_PATH)
     if img is None:
         raise Exception(f"Couldn't load image: {IMAGE_PATH}")
@@ -109,10 +119,10 @@ def main() -> None:
     predictor = ChessboardPredictor()
     fen, tile_certainties = predictor.get_prediction(tiles)
     predictor.close()
-    
+
     if unflip:
         fen = unflip_fen(fen)
-        
+
     short_fen = shorten_fen(fen)
     certainty = tile_certainties.min()
     print("Per-tile certainty:")
@@ -122,7 +132,7 @@ def main() -> None:
     )
     print(f"---\nPredicted FEN:\n{short_fen} {active} - - 0 1")
     print(f"Final Certainty: {certainty * 100:.1f}%")
-    
+
     return short_fen
 
 

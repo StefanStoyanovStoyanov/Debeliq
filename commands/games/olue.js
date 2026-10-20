@@ -3,7 +3,7 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const dataDir = path.join(__dirname, "..", "..", "data");
-const userDataPath = path.join(dataDir, "user_data.json");
+const olueDataPath = path.join(dataDir, "olue_data.json");
 
 async function ensureDataDir() {
     try {
@@ -11,42 +11,29 @@ async function ensureDataDir() {
     } catch {}
 }
 
-async function loadUserData() {
+async function loadOlueData() {
     try {
         await ensureDataDir();
         try {
-            await fs.access(userDataPath);
+            await fs.access(olueDataPath);
         } catch {
-            await fs.writeFile(userDataPath, JSON.stringify({}), "utf8");
+            await fs.writeFile(olueDataPath, JSON.stringify({}), "utf8");
         }
-        const data = await fs.readFile(userDataPath, "utf8");
-        if (!data.trim()) {
-            await fs.writeFile(userDataPath, JSON.stringify({}), "utf8");
-            return {};
-        }
-        const parsedData = JSON.parse(data);
-        return parsedData.olue_game || {};
+
+        const data = await fs.readFile(olueDataPath, "utf8");
+        return JSON.parse(data || "{}");
     } catch (error) {
-        console.error("Error loading user data:", error);
-        await fs.writeFile(userDataPath, JSON.stringify({}), "utf8");
+        console.error("Error loading Olue data:", error);
         return {};
     }
 }
 
-async function saveUserData(userData) {
+async function saveOlueData(data) {
     try {
         await ensureDataDir();
-        let existingData = {};
-        try {
-            const fileContent = await fs.readFile(userDataPath, "utf8");
-            if (fileContent.trim()) {
-                existingData = JSON.parse(fileContent);
-            }
-        } catch {}
-        existingData.olue_game = userData;
-        await fs.writeFile(userDataPath, JSON.stringify(existingData, null, 2), "utf8");
+        await fs.writeFile(olueDataPath, JSON.stringify(data, null, 2), "utf8");
     } catch (error) {
-        console.error("Error saving user data:", error);
+        console.error("Error saving Olue data:", error);
     }
 }
 
@@ -115,41 +102,23 @@ module.exports = {
 
     async execute(interaction) {
         const userId = interaction.user.id;
-        let userData = await loadUserData();
+        const savedData = await loadOlueData();
+        const currentScore = savedData[userId]?.score ?? 0;
 
-        if (!userData[userId]) {
-            userData[userId] = { score: 0 };
-            await saveUserData(userData);
+        const userState = {
+            score: currentScore,
+            selectedCells: new Set(),
+            specialNumbers: generateSpecialNumbers(),
+        };
 
-            const startButton = new ButtonBuilder()
-                .setCustomId("start")
-                .setLabel("Start Game")
-                .setStyle(ButtonStyle.Primary);
-            const startRow = new ActionRowBuilder().addComponents(startButton);
+        gameStates.set(userId, userState);
 
-            const introText = `Hi, it looks like it's your first time playing Olue the Game. So, they gave you a drilling machine from Pernik, with which they let you search for olue. Of course Pernichani will steal 60% of your earnings, but your goal is to make a living with this job so you have no choice but to continue playing. To start drilling for olue, click the button on the corresponding hole. Later in the game you will be able to buy better drills and start mining more valuable olue. Just be careful not to break all drills because you'll have to start over. Have fun. Click the button to start playing.`;
-
-            await interaction.reply({
-                content: introText,
-                components: [startRow],
-            });
-        } else {
-            const userState = {
-                score: 0,
-                selectedCells: new Set(),
-                specialNumbers: generateSpecialNumbers(),
-            };
-
-            gameStates.set(userId, userState);
-
-            const { content, components } = createGameGrid(0, userState.specialNumbers);
-            await interaction.reply({ content, components });
-        }
+        const { content, components } = createGameGrid(currentScore, userState.specialNumbers);
+        await interaction.reply({ content, components });
     },
 
     async handleButton(interaction) {
         const userId = interaction.user.id;
-        let userData = await loadUserData();
         let userState = gameStates.get(userId);
 
         if (!userState) {
@@ -161,20 +130,17 @@ module.exports = {
             gameStates.set(userId, userState);
         }
 
-        if (!userData[userId]) {
-            userData[userId] = { score: 0 };
-            await saveUserData(userData);
-        }
-
         const customId = interaction.customId;
 
         try {
             if (customId === "start" || customId === "retry") {
-                userState.score = 0;
+                const savedData = await loadOlueData();
+                const currentScore = savedData[userId]?.score ?? 0;
+                userState.score = currentScore;
                 userState.selectedCells = new Set();
                 userState.specialNumbers = generateSpecialNumbers();
 
-                const { content, components } = createGameGrid(0, userState.specialNumbers);
+                const { content, components } = createGameGrid(currentScore, userState.specialNumbers);
                 await interaction.update({ content, components });
                 return;
             }
@@ -184,9 +150,12 @@ module.exports = {
 
                 if (userState.specialNumbers.includes(chosenNumber)) {
                     userState.selectedCells.add(chosenNumber);
-                    userData[userId].score += 1;
-                    userState.score = userData[userId].score;
-                    await saveUserData(userData);
+                    userState.score += 1;
+
+                    const savedData = await loadOlueData();
+                    savedData[userId] = savedData[userId] || { score: 0 };
+                    savedData[userId].score = userState.score;
+                    await saveOlueData(savedData);
 
                     if (userState.specialNumbers.every((num) => userState.selectedCells.has(num))) {
                         userState.selectedCells.clear();
@@ -204,11 +173,13 @@ module.exports = {
                     }
                 } else {
                     const finalScore = userState.score;
+                    const savedData = await loadOlueData();
+                    savedData[userId] = { score: 0 };
+                    await saveOlueData(savedData);
+
                     userState.score = 0;
                     userState.selectedCells = new Set();
                     userState.specialNumbers = generateSpecialNumbers();
-                    userData[userId].score = 0;
-                    await saveUserData(userData);
 
                     const retryButton = new ButtonBuilder()
                         .setCustomId("retry")

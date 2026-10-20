@@ -5,7 +5,7 @@ const path = require("node:path");
 const STEFCHO_ID = "568496102127566873";
 const dataDir = path.join(__dirname, "..", "data");
 const COUNTER_FILE = path.join(dataDir, "stefcho_sus_counter.txt");
-const SUS_WORDS_FILE = path.join(dataDir, "sus.txt");
+const SUS_WORDS_FILE = path.join(dataDir, "sus_words.txt");
 
 function ensureFilesExist() {
     if (!fs.existsSync(dataDir)) {

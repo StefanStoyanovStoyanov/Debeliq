@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { spawn } = require("child_process");
 
 module.exports = {
@@ -19,6 +20,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        let tempDir;
         try {
             await interaction.deferReply();
 
@@ -30,14 +32,19 @@ module.exports = {
             }
 
             const solverDir = path.join(__dirname, "chess_solver");
-            const imagePath = path.join(solverDir, "chessboard.png");
-            const solvedImagePath = path.join(solverDir, "solved_chessboard.png");
+            const scriptPath = path.join(solverDir, "src", "chess_solve.py");
+            tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "debeliq-chess-"));
+            const imagePath = path.join(tempDir, "chessboard.png");
+            const solvedImagePath = path.join(tempDir, "solved_chessboard.png");
 
             const response = await fetch(attachment.url);
+            if (!response.ok) {
+                throw new Error(`Failed to download chess image: HTTP ${response.status}`);
+            }
             const buffer = Buffer.from(await response.arrayBuffer());
-            fs.writeFileSync(imagePath, buffer);
+            await fs.promises.writeFile(imagePath, buffer);
 
-            const pythonArgs = [path.join(solverDir, "chess_solve.py"), imagePath];
+            const pythonArgs = [scriptPath, imagePath, "--output", solvedImagePath];
 
             if (bottomColor === "black") {
                 pythonArgs.push("--invert_fen");
@@ -49,87 +56,47 @@ module.exports = {
                 PYTHONUNBUFFERED: "1",
             };
 
-            const runPythonProcess = () => {
-                return new Promise((resolve, reject) => {
-                    const results = {
-                        fenResult: "",
-                        whiteMove: "",
-                        blackMove: "",
-                        success: false,
-                        error: null,
-                    };
+            const pythonOutput = await new Promise((resolve, reject) => {
+                const pythonProcess = spawn("python", pythonArgs, { cwd: solverDir, env });
+                let stdout = "";
+                let stderr = "";
 
-                    const pythonProcess = spawn("python", pythonArgs, {
-                        cwd: solverDir,
-                        env: env,
-                    });
-
-                    let pythonOutput = "";
-
-                    pythonProcess.stdout.on("data", (data) => {
-                        const output = data.toString();
-                        pythonOutput += output;
-
-                        const fenMatch = output.match(/Predicted FEN: (.+)/);
-                        if (fenMatch) {
-                            results.fenResult = fenMatch[1];
-                        }
-
-                        const whiteMoveMatch = output.match(/Best move for White: (.+)/);
-                        if (whiteMoveMatch) {
-                            results.whiteMove = whiteMoveMatch[1];
-                        }
-
-                        const blackMoveMatch = output.match(/Best move for Black: (.+)/);
-                        if (blackMoveMatch) {
-                            results.blackMove = blackMoveMatch[1];
-                        }
-                    });
-
-                    pythonProcess.stderr.on("data", (data) => {
-                        const errorText = data.toString();
-                        if (
-                            !errorText.includes("tensorflow") &&
-                            !errorText.includes("TensorFlow") &&
-                            !errorText.includes("MLIR")
-                        ) {
-                            pythonOutput += `Error: ${errorText}`;
-                            console.error(`Python Error: ${errorText}`);
-                        }
-                    });
-
-                    pythonProcess.on("close", (code) => {
-                        if (code === 0) {
-                            results.success = true;
-                            resolve(results);
-                        } else {
-                            results.error = `Process exited with code ${code}. Output: ${pythonOutput}`;
-                            reject(results);
-                        }
-                    });
-
-                    pythonProcess.on("error", (err) => {
-                        results.error = `Process error: ${err.message}`;
-                        reject(results);
-                    });
+                pythonProcess.stdout.on("data", (data) => {
+                    stdout += data.toString();
                 });
-            };
+                pythonProcess.stderr.on("data", (data) => {
+                    stderr += data.toString();
+                });
+                pythonProcess.on("error", reject);
+                pythonProcess.on("close", (code) => {
+                    if (code === 0) {
+                        resolve(stdout);
+                    } else {
+                        reject(
+                            new Error(
+                                `Chess solver exited with code ${code}.\n${stderr}\n${stdout}`
+                            )
+                        );
+                    }
+                });
+            });
 
             try {
-                const results = await runPythonProcess();
-
                 if (!fs.existsSync(solvedImagePath)) {
                     throw new Error("Failed to generate the analyzed chess image.");
                 }
 
+                const fenResult = pythonOutput.match(/Predicted FEN: (.+)/)?.[1];
+                const whiteMove = pythonOutput.match(/Best move for White: (.+)/)?.[1];
+                const blackMove = pythonOutput.match(/Best move for Black: (.+)/)?.[1];
                 const solvedAttachment = new AttachmentBuilder(solvedImagePath, { name: "analyzed_chess.png" });
 
                 const responseEmbed = {
                     title: "Chess Position Analysis",
                     fields: [
-                        { name: "FEN Notation", value: results.fenResult || "Not found", inline: false },
-                        { name: "Best Move for White", value: results.whiteMove || "Not found", inline: true },
-                        { name: "Best Move for Black", value: results.blackMove || "Not found", inline: true },
+                        { name: "FEN Notation", value: fenResult || "Not found", inline: false },
+                        { name: "Best Move for White", value: whiteMove || "Not found", inline: true },
+                        { name: "Best Move for Black", value: blackMove || "Not found", inline: true },
                         {
                             name: "Board Orientation",
                             value: `${bottomColor.charAt(0).toUpperCase() + bottomColor.slice(1)} pieces on bottom`,
@@ -163,6 +130,14 @@ module.exports = {
                 }
             } catch (replyError) {
                 console.error("Failed to respond to interaction:", replyError);
+            }
+        } finally {
+            if (tempDir) {
+                try {
+                    await fs.promises.rm(tempDir, { recursive: true, force: true });
+                } catch (cleanupError) {
+                    console.error("Failed to clean up temporary chess solver files:", cleanupError);
+                }
             }
         }
     },

@@ -1,41 +1,4 @@
 const { SlashCommandBuilder } = require("discord.js");
-const fs = require("fs").promises;
-
-const path = require("path");
-const dataDir = path.join(__dirname, "..", "..", "data");
-const userDataPath = path.join(dataDir, "user_data.json");
-
-async function ensureDataDir() {
-    try {
-        await fs.mkdir(dataDir, { recursive: true });
-    } catch {}
-}
-
-async function loadUserData() {
-    try {
-        await ensureDataDir();
-        try {
-            await fs.access(userDataPath);
-        } catch {
-            await fs.writeFile(userDataPath, JSON.stringify({}), "utf8");
-        }
-        const data = await fs.readFile(userDataPath, "utf8");
-        return JSON.parse(data || "{}");
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        return {};
-    }
-}
-
-async function saveUserData(data) {
-    try {
-        await ensureDataDir();
-        await fs.writeFile(userDataPath, JSON.stringify(data, null, 4), "utf8");
-    } catch (error) {
-        console.error("Error saving user data:", error);
-        throw new Error("Failed to save user data");
-    }
-}
 
 function generate() {
     const uniqueNumbers = [];
@@ -69,13 +32,6 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            const userData = await loadUserData();
-            const userId = interaction.user.id;
-
-            if (!userData[userId]) {
-                userData[userId] = { money: 0 };
-            }
-
             const userNumbers = [
                 interaction.options.getInteger("1st"),
                 interaction.options.getInteger("2nd"),
@@ -124,10 +80,6 @@ module.exports = {
                     prize = 0.01;
                     break;
             }
-
-            userData[userId].money += prize;
-
-            await saveUserData(userData);
 
             let resultMessage;
             switch (correctGuesses) {

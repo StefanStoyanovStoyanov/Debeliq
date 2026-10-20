@@ -1,8 +1,12 @@
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import ImageDraw
 import chessboard_finder
 import load_image
 import argparse
+
+import os, sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import IMAGE_PATH, OUTPUT_PATH
 
 
@@ -10,9 +14,9 @@ def algebraic_to_coords(square, invert_fen=False):
     file = ord(square[0].lower()) - ord("a")
     rank = int(square[1]) - 1
     if invert_fen:
-        return file, rank  
+        return file, rank
     else:
-        return file, 7 - rank  
+        return file, 7 - rank
 
 
 def draw_arrow(draw, start, end, color=(255, 0, 0), width=4, arrowhead=18):
@@ -42,7 +46,11 @@ def crop_chessboard(img, corners):
 
 
 def draw_best_move(
-    image_path=IMAGE_PATH, white_move=None, black_move=None, output_path=None, invert_fen=False
+    white_move=None,
+    black_move=None,
+    output_path=None,
+    invert_fen=False,
+    image_path=IMAGE_PATH,
 ):
     img = load_image.load_image(image_path)
     if img is None:
@@ -52,10 +60,10 @@ def draw_best_move(
     corners = chessboard_finder.findChessboardCorners(img_arr)
     if corners is None:
         raise ValueError("Couldn't find chessboard in image..")
-    
+
     cropped_img = crop_chessboard(img.convert("RGB"), corners)
     draw = ImageDraw.Draw(cropped_img)
-    x0, y0, x1, y1 = 0, 0, cropped_img.height, cropped_img.width  
+    x0, y0, x1, y1 = 0, 0, cropped_img.height, cropped_img.width
     board_width = y1 - y0
     board_height = x1 - x0
     square_w = board_width / 8
@@ -103,7 +111,11 @@ def draw_best_move(
             arrowhead=int(min(square_w, square_h) // 2.5),
         )
 
-    draw.rectangle([(0, 0), (cropped_img.width - 1, cropped_img.height - 1)], outline=(0, 255, 0), width=2)
+    draw.rectangle(
+        [(0, 0), (cropped_img.width - 1, cropped_img.height - 1)],
+        outline=(0, 255, 0),
+        width=2,
+    )
 
     if output_path is None:
         output_path = OUTPUT_PATH
@@ -114,14 +126,26 @@ def draw_best_move(
 if __name__ == "__main__":
     import sys
 
-    parser = argparse.ArgumentParser(description="Draw the best moves on a chessboard image.")
-    parser.add_argument('--invert_fen', action='store_true', help='Invert FEN so black pieces are on bottom')
-    parser.add_argument('--white_move', required=True, help='The best move for white in UCI format (e.g. "e2e4")')
-    parser.add_argument('--black_move', help='The best move for black in UCI format (e.g. "e7e5")')
-    
+    parser = argparse.ArgumentParser(
+        description="Draw the best moves on a chessboard image."
+    )
+    parser.add_argument(
+        "--invert_fen",
+        action="store_true",
+        help="Invert FEN so black pieces are on bottom",
+    )
+    parser.add_argument(
+        "--white_move",
+        required=True,
+        help='The best move for white in UCI format (e.g. "e2e4")',
+    )
+    parser.add_argument(
+        "--black_move", help='The best move for black in UCI format (e.g. "e7e5")'
+    )
     args = parser.parse_args()
-    
     white_move = args.white_move
     black_move = args.black_move
-    out = draw_best_move(IMAGE_PATH, white_move, black_move, OUTPUT_PATH, invert_fen=args.invert_fen)
+    out = draw_best_move(
+        white_move, black_move, OUTPUT_PATH, invert_fen=args.invert_fen
+    )
     print(f"Saved: {out}")

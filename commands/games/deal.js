@@ -1,41 +1,4 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
-const fs = require("fs").promises;
-const path = require("path");
-
-const dataDir = path.join(__dirname, "..", "..", "data");
-const userDataPath = path.join(dataDir, "user_data.json");
-
-async function ensureDataDir() {
-    try {
-        await fs.mkdir(dataDir, { recursive: true });
-    } catch {}
-}
-
-async function loadUserData() {
-    try {
-        await ensureDataDir();
-        try {
-            await fs.access(userDataPath);
-        } catch {
-            await fs.writeFile(userDataPath, JSON.stringify({}), "utf8");
-        }
-        const data = await fs.readFile(userDataPath, "utf8");
-        return JSON.parse(data || "{}");
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        return {};
-    }
-}
-
-async function saveUserData(data) {
-    try {
-        await ensureDataDir();
-        await fs.writeFile(userDataPath, JSON.stringify(data, null, 4), "utf8");
-    } catch (error) {
-        console.error("Error saving user data:", error);
-        throw new Error("Failed to save user data");
-    }
-}
 
 function shuffleCases(cases) {
     for (let i = cases.length - 1; i > 0; i--) {
@@ -232,8 +195,6 @@ module.exports = {
         let components;
         let additionalInfo = "";
 
-        const userData = await loadUserData();
-
         if (interaction.customId.startsWith("page_")) {
             const [_, direction, currentPage] = interaction.customId.split("_");
             const newPage = direction === "prev" ? parseInt(currentPage) - 1 : parseInt(currentPage) + 1;
@@ -282,24 +243,18 @@ module.exports = {
                     additionalInfo = `You switched to case ${switchCase.number} and won ${formatCurrency(
                         switchCase.value
                     )}!`;
-                    userData[interaction.user.id] = userData[interaction.user.id] || { money: 0 };
-                    userData[interaction.user.id].money += switchCase.value;
                 } else {
                     const offer = calculateBankerOffer(gameState.cases);
                     const yourCaseValue = gameState.cases.find((c) => c.number === gameState.yourCase).value;
                     additionalInfo = `Congratulations! You accepted the deal for ${formatCurrency(offer)}!\nYour case ${
                         gameState.yourCase
                     } contained ${formatCurrency(yourCaseValue)}!`;
-                    userData[interaction.user.id] = userData[interaction.user.id] || { money: 0 };
-                    userData[interaction.user.id].money += offer;
                 }
                 gameState.isActive = false;
             } else {
                 if (gameState.cases.length === 2) {
                     const yourCaseValue = gameState.cases.find((c) => c.number === gameState.yourCase).value;
                     additionalInfo = `You kept your case and won ${formatCurrency(yourCaseValue)}!`;
-                    userData[interaction.user.id] = userData[interaction.user.id] || { money: 0 };
-                    userData[interaction.user.id].money += yourCaseValue;
                     gameState.isActive = false;
                 } else {
                     gameState.remainingCasesToPick = calculateRemainingCasesToPick(gameState.cases);
@@ -309,7 +264,6 @@ module.exports = {
             }
             gameState.isAwaitingDeal = false;
             embed = createGameEmbed(gameState, additionalInfo);
-            await saveUserData(userData);
         }
 
         await interaction.update({ embeds: [embed], components: components || [] });
