@@ -1,4 +1,6 @@
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require("discord.js");
+const { Player } = require("discord-player");
+const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -18,6 +20,19 @@ const client = new Client({
 
 client.commands = new Collection();
 client.activeGames = new Collection();
+
+const player = new Player(client, {
+    skipFFmpeg: false,
+    ytdlOptions: {
+        quality: "highestaudio",
+        highWaterMark: 1 << 25,
+    },
+});
+client.player = player;
+
+player.extractors.loadMulti(DefaultExtractors).catch((error) => {
+    console.error("Failed to load Discord Player extractors:", error);
+});
 
 const commandsToRegister = [];
 const commandsPath = path.join(__dirname, "commands");
@@ -57,10 +72,12 @@ function loadEvents(directory) {
         } else if (file.name.endsWith(".js")) {
             try {
                 const event = require(filePath);
+                const emitter = event.type === "player" ? player.events : client;
+
                 if (event.once) {
-                    client.once(event.name, (...args) => event.execute(...args, client));
+                    emitter.once(event.name, (...args) => event.execute(...args, client));
                 } else {
-                    client.on(event.name, (...args) => event.execute(...args, client));
+                    emitter.on(event.name, (...args) => event.execute(...args, client));
                 }
                 eventCount++;
             } catch (error) {
@@ -87,4 +104,7 @@ client.once("ready", async () => {
     }
 });
 
-client.login(TOKEN);
+client.login(TOKEN).catch((error) => {
+    console.error("Failed to log in to Discord:", error);
+    process.exit(1);
+});

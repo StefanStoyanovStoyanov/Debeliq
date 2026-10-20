@@ -1,17 +1,9 @@
 {
-  "name": "debeliq",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "update": "npm update",
-    "update:force": "npm update --force"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.21.0"
+    "@discord-player/extractor": "^7.2.0",
+    "@discordjs/voice": "^0.19.2",
+    "discord-player": "^7.2.0",
+    "discord.js": "^14.27.0",
+    "ffmpeg-static": "^5.3.0"
   }
 }

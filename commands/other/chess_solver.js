@@ -1,5 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { AttachmentBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -26,7 +25,7 @@ module.exports = {
             const attachment = interaction.options.getAttachment("image");
             const bottomColor = interaction.options.getString("bottom_color");
 
-            if (!attachment.contentType.startsWith("image/")) {
+            if (!attachment.contentType || !attachment.contentType.startsWith("image/")) {
                 return await interaction.editReply("Please provide a valid image file.");
             }
 
