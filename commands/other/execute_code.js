@@ -27,7 +27,7 @@ async function executeCommand(command, cleanupFiles = []) {
                 if (fs.existsSync(file)) {
                     await fs.promises.unlink(file);
                 }
-            })
+            }),
         );
     }
 }
@@ -125,9 +125,9 @@ module.exports = {
                     { name: "C++", value: "cpp" },
                     { name: "C", value: "c" },
                     { name: "Rust", value: "rs" },
-                    { name: "Java", value: "java" }
+                    { name: "Java", value: "java" },
                 )
-                .setRequired(true)
+                .setRequired(true),
         )
         .addStringOption((option) => option.setName("code").setDescription("Paste the code here").setRequired(true)),
 

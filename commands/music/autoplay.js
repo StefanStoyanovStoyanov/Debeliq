@@ -29,7 +29,7 @@ module.exports = {
         await interaction.reply(
             isAutoplay
                 ? "Autoplay mode has been **disabled**."
-                : "Autoplay mode has been **enabled**. Related songs will be played automatically."
+                : "Autoplay mode has been **enabled**. Related songs will be played automatically.",
         );
     },
 };

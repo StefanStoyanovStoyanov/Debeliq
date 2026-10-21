@@ -6,7 +6,7 @@ module.exports = {
         .setName("jump")
         .setDescription("Jump to a specific position in the queue")
         .addIntegerOption((option) =>
-            option.setName("position").setDescription("The position in the queue to jump to").setRequired(true)
+            option.setName("position").setDescription("The position in the queue to jump to").setRequired(true),
         ),
 
     async execute(interaction) {

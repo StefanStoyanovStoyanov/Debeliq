@@ -10,7 +10,7 @@ module.exports = {
                 .setName("action")
                 .setDescription("What action you want to perform on the loop")
                 .setRequired(true)
-                .addChoices({ name: "Off", value: "0" }, { name: "Track", value: "1" }, { name: "Queue", value: "2" })
+                .addChoices({ name: "Off", value: "0" }, { name: "Track", value: "1" }, { name: "Queue", value: "2" }),
         ),
 
     async execute(interaction) {

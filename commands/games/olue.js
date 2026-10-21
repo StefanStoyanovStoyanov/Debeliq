@@ -82,7 +82,7 @@ function createGameGrid(score = 0, specialNumbers = null, selectedCells = new Se
             .setCustomId(`number_${index + 1}`)
             .setLabel(`${index + 1}`)
             .setStyle(ButtonStyle.Primary)
-            .setDisabled(selectedCells.has(index + 1))
+            .setDisabled(selectedCells.has(index + 1)),
     );
     const buttonRows = [
         new ActionRowBuilder().addComponents(...numberButtons.slice(0, 5)),
@@ -167,7 +167,7 @@ module.exports = {
                         const { content, components } = createGameGrid(
                             userState.score,
                             userState.specialNumbers,
-                            userState.selectedCells
+                            userState.selectedCells,
                         );
                         await interaction.update({ content, components });
                     }

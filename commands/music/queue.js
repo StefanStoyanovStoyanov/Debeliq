@@ -12,8 +12,8 @@ module.exports = {
                 .addChoices(
                     { name: "First 10 songs", value: "first" },
                     { name: "Last 10 songs", value: "last" },
-                    { name: "Queue size", value: "size" }
-                )
+                    { name: "Queue size", value: "size" },
+                ),
         ),
 
     async execute(interaction) {
@@ -43,7 +43,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setTitle("Queue Information")
                 .setDescription(
-                    `There are currently **${tracksArray.length}** songs in the queue\nNow playing: **${track.title}**`
+                    `There are currently **${tracksArray.length}** songs in the queue\nNow playing: **${track.title}**`,
                 );
 
             if (track.thumbnail && track.thumbnail.trim() !== "") {
@@ -69,7 +69,7 @@ module.exports = {
                             const position = showLast ? tracksArray.length - (tracksToShow.length - i) + 1 : i + 1;
                             return `**#${position}** - Title: **${track.title}** | Uploaded by: **${track.author}**`;
                         })
-                        .join("\n")
+                        .join("\n"),
             );
 
         if (track.thumbnail && track.thumbnail.trim() !== "") {

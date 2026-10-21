@@ -21,7 +21,7 @@ module.exports = {
                 .setDescription("Playback speed (0.5x to 3x)")
                 .setMinValue(0.5)
                 .setMaxValue(3.0)
-                .setRequired(true)
+                .setRequired(true),
         ),
 
     async execute(interaction) {

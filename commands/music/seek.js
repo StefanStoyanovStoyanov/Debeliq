@@ -6,10 +6,7 @@ module.exports = {
         .setName("seek")
         .setDescription("Seek to a specific timestamp in the current song.")
         .addStringOption((option) =>
-            option
-                .setName("timestamp")
-                .setDescription("The timestamp to seek to (e.g. 1:23 or 83)")
-                .setRequired(true)
+            option.setName("timestamp").setDescription("The timestamp to seek to (e.g. 1:23 or 83)").setRequired(true),
         ),
 
     async execute(interaction) {
@@ -56,7 +53,9 @@ module.exports = {
 
         try {
             await queue.node.seek(seconds * 1000);
-            await interaction.reply(`Seeked to ${new Date(seconds * 1000).toISOString().substr(14, 5)} in **${currentTrack.title}**.`);
+            await interaction.reply(
+                `Seeked to ${new Date(seconds * 1000).toISOString().substr(14, 5)} in **${currentTrack.title}**.`,
+            );
         } catch (err) {
             await interaction.reply({
                 content: `Failed to seek: ${err}`,

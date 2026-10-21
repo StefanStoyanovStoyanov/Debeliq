@@ -91,7 +91,7 @@ function createCaseButtons(gameState, disabledNumbers = [], page = 1) {
                 .setCustomId(`case_${caseNumber}`)
                 .setLabel(`${caseNumber}`)
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(isDisabled)
+                .setDisabled(isDisabled),
         );
 
         if (currentRow.components.length === 5) {
@@ -114,7 +114,7 @@ function createCaseButtons(gameState, disabledNumbers = [], page = 1) {
             .setCustomId(`page_next_${page}`)
             .setLabel("Next")
             .setStyle(ButtonStyle.Secondary)
-            .setDisabled(endIndex >= 26)
+            .setDisabled(endIndex >= 26),
     );
 
     rows.push(navigationRow);
@@ -125,7 +125,7 @@ function createDealButtons() {
     return [
         new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId("deal_yes").setLabel("DEAL").setStyle(ButtonStyle.Success),
-            new ButtonBuilder().setCustomId("deal_no").setLabel("NO DEAL").setStyle(ButtonStyle.Danger)
+            new ButtonBuilder().setCustomId("deal_no").setLabel("NO DEAL").setStyle(ButtonStyle.Danger),
         ),
     ];
 }
@@ -137,7 +137,7 @@ function displayAllValues(gameState) {
     ];
     const remaining = gameState.cases.map((c) => c.value);
     const formatted = allValues.map((v) =>
-        remaining.includes(v) ? `**${formatCurrency(v)}**` : `~~${formatCurrency(v)}~~`
+        remaining.includes(v) ? `**${formatCurrency(v)}**` : `~~${formatCurrency(v)}~~`,
     );
     const half = Math.ceil(formatted.length / 2);
     const lines = [];
@@ -157,7 +157,7 @@ function createGameEmbed(gameState, additionalInfo = "") {
     } else {
         embed.addFields(
             { name: "Your Case", value: `${gameState.yourCase}`, inline: true },
-            { name: "Cases to Open", value: `${gameState.remainingCasesToPick}`, inline: true }
+            { name: "Cases to Open", value: `${gameState.remainingCasesToPick}`, inline: true },
         );
         if (additionalInfo) {
             embed.addFields({ name: "Last Action", value: additionalInfo });
@@ -241,7 +241,7 @@ module.exports = {
                 if (gameState.cases.length === 2) {
                     const switchCase = gameState.cases.find((c) => c.number !== gameState.yourCase);
                     additionalInfo = `You switched to case ${switchCase.number} and won ${formatCurrency(
-                        switchCase.value
+                        switchCase.value,
                     )}!`;
                 } else {
                     const offer = calculateBankerOffer(gameState.cases);

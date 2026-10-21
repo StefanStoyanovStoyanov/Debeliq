@@ -9,14 +9,14 @@ module.exports = {
         .setName("chess_solver")
         .setDescription("Analyzes a chess position from an image and finds the best moves")
         .addAttachmentOption((option) =>
-            option.setName("image").setDescription("A chess board image to analyze").setRequired(true)
+            option.setName("image").setDescription("A chess board image to analyze").setRequired(true),
         )
         .addStringOption((option) =>
             option
                 .setName("bottom_color")
                 .setDescription("Which color is on the bottom of the board")
                 .setRequired(true)
-                .addChoices({ name: "White", value: "white" }, { name: "Black", value: "black" })
+                .addChoices({ name: "White", value: "white" }, { name: "Black", value: "black" }),
         ),
 
     async execute(interaction) {
@@ -72,11 +72,7 @@ module.exports = {
                     if (code === 0) {
                         resolve(stdout);
                     } else {
-                        reject(
-                            new Error(
-                                `Chess solver exited with code ${code}.\n${stderr}\n${stdout}`
-                            )
-                        );
+                        reject(new Error(`Chess solver exited with code ${code}.\n${stderr}\n${stdout}`));
                     }
                 });
             });
@@ -120,8 +116,7 @@ module.exports = {
         } catch (error) {
             console.error("Chess solver error:", error);
 
-            const noChessboardFound =
-                error instanceof Error && error.message.includes("NO_CHESSBOARD:");
+            const noChessboardFound = error instanceof Error && error.message.includes("NO_CHESSBOARD:");
             const userMessage = noChessboardFound
                 ? "No chessboard was found in that image. Upload a clear image showing the complete board and try again."
                 : "The chess solver encountered an error while processing your image. Please try again with a clear board image. If the problem continues, contact an administrator.";

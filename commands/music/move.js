@@ -6,10 +6,10 @@ module.exports = {
         .setName("move")
         .setDescription("Move a track from one position in the queue to another")
         .addIntegerOption((option) =>
-            option.setName("from").setDescription("The current position of the track to move").setRequired(true)
+            option.setName("from").setDescription("The current position of the track to move").setRequired(true),
         )
         .addIntegerOption((option) =>
-            option.setName("to").setDescription("The new position to move the track to").setRequired(true)
+            option.setName("to").setDescription("The new position to move the track to").setRequired(true),
         ),
 
     async execute(interaction) {

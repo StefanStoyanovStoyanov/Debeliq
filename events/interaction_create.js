@@ -51,7 +51,7 @@ module.exports = {
             const commandName = originalInteraction.commandName;
             if (!commandName) {
                 console.warn(
-                    `Button clicked, but original command name couldn't be determined. CustomID: ${interaction.customId}`
+                    `Button clicked, but original command name couldn't be determined. CustomID: ${interaction.customId}`,
                 );
                 try {
                     await interaction.deferUpdate();
@@ -73,7 +73,7 @@ module.exports = {
 
             if (!command.handleButton || typeof command.handleButton !== "function") {
                 console.warn(
-                    `Command ${commandName} does not have a handleButton method for button ${interaction.customId}.`
+                    `Command ${commandName} does not have a handleButton method for button ${interaction.customId}.`,
                 );
                 try {
                     await interaction.deferUpdate();

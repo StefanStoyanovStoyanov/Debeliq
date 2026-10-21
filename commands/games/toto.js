@@ -56,7 +56,7 @@ module.exports = {
 
             const sortedWinningNumbers = [...winningNumbers].sort((a, b) => a - b);
             const formattedWinningNumbers = sortedWinningNumbers.map((number) =>
-                userNumbers.includes(number) ? `**${number}**` : `${number}`
+                userNumbers.includes(number) ? `**${number}**` : `${number}`,
             );
 
             let prize = 0;

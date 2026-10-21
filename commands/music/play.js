@@ -6,10 +6,10 @@ module.exports = {
         .setName("play")
         .setDescription("Play a song or playlist and enables autoplay by default.")
         .addStringOption((option) =>
-            option.setName("query").setDescription("Name or URL of the song or playlist").setRequired(true)
+            option.setName("query").setDescription("Name or URL of the song or playlist").setRequired(true),
         )
         .addBooleanOption((option) =>
-            option.setName("next").setDescription("Add the song/playlist next in the queue (after current)")
+            option.setName("next").setDescription("Add the song/playlist next in the queue (after current)"),
         ),
 
     async execute(interaction) {

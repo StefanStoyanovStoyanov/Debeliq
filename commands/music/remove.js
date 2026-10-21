@@ -6,7 +6,7 @@ module.exports = {
         .setName("remove")
         .setDescription("Remove a specific track from the queue")
         .addIntegerOption((option) =>
-            option.setName("number").setDescription("The track number you want to remove").setRequired(true)
+            option.setName("number").setDescription("The track number you want to remove").setRequired(true),
         ),
 
     async execute(interaction) {
