@@ -9,14 +9,7 @@ module.exports = {
         .setName("chess_solver")
         .setDescription("Analyzes a chess position from an image and finds the best moves")
         .addAttachmentOption((option) =>
-            option.setName("image").setDescription("A chess board image to analyze").setRequired(true),
-        )
-        .addStringOption((option) =>
-            option
-                .setName("bottom_color")
-                .setDescription("Which color is on the bottom of the board")
-                .setRequired(true)
-                .addChoices({ name: "White", value: "white" }, { name: "Black", value: "black" }),
+            option.setName("image").setDescription("A chessboard image to analyze").setRequired(true),
         ),
 
     async execute(interaction) {
@@ -25,39 +18,44 @@ module.exports = {
             await interaction.deferReply();
 
             const attachment = interaction.options.getAttachment("image");
-            const bottomColor = interaction.options.getString("bottom_color");
-
-            if (!attachment.contentType || !attachment.contentType.startsWith("image/")) {
+            const isImage =
+                attachment?.contentType?.startsWith("image/") ||
+                /\.(png|jpe?g|webp|bmp|gif)$/i.test(attachment?.name || "");
+            if (!isImage) {
                 return await interaction.editReply("Please provide a valid image file.");
             }
 
-            const solverDir = path.join(__dirname, "chess_solver");
+            const solverDir =
+                process.env.CHESS_SOLVER_DIR || path.resolve(__dirname, "../../../Chess Solver");
             const scriptPath = path.join(solverDir, "src", "chess_solve.py");
-            tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "debeliq-chess-"));
-            const imagePath = path.join(tempDir, "chessboard.png");
-            const solvedImagePath = path.join(tempDir, "solved_chessboard.png");
+            const requiredFiles = [
+                scriptPath,
+                path.join(solverDir, "assets", "image_to_fen_model.pb"),
+                path.join(solverDir, "assets", "stockfish.exe"),
+            ];
+            if (requiredFiles.some((filePath) => !fs.existsSync(filePath))) {
+                throw new Error("CHESS_SOLVER_NOT_INSTALLED");
+            }
 
+            tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "debeliq-chess-"));
+            const imagePath = path.join(tempDir, "input-image");
             const response = await fetch(attachment.url);
             if (!response.ok) {
                 throw new Error(`Failed to download chess image: HTTP ${response.status}`);
             }
-            const buffer = Buffer.from(await response.arrayBuffer());
-            await fs.promises.writeFile(imagePath, buffer);
-
-            const pythonArgs = [scriptPath, imagePath, "--output", solvedImagePath];
-
-            if (bottomColor === "black") {
-                pythonArgs.push("--invert_fen");
-            }
+            await fs.promises.writeFile(imagePath, Buffer.from(await response.arrayBuffer()));
 
             const env = {
                 ...process.env,
                 TF_CPP_MIN_LOG_LEVEL: "3",
                 PYTHONUNBUFFERED: "1",
             };
-
-            const pythonOutput = await new Promise((resolve, reject) => {
-                const pythonProcess = spawn("python", pythonArgs, { cwd: solverDir, env });
+            const pythonResult = await new Promise((resolve, reject) => {
+                const pythonProcess = spawn(
+                    process.env.PYTHON_EXECUTABLE || "python",
+                    [scriptPath, "--image", imagePath, "--output-dir", tempDir],
+                    { cwd: solverDir, env },
+                );
                 let stdout = "";
                 let stderr = "";
 
@@ -68,67 +66,65 @@ module.exports = {
                     stderr += data.toString();
                 });
                 pythonProcess.on("error", reject);
-                pythonProcess.on("close", (code) => {
-                    if (code === 0) {
-                        resolve(stdout);
-                    } else {
-                        reject(new Error(`Chess solver exited with code ${code}.\n${stderr}\n${stdout}`));
-                    }
-                });
+                pythonProcess.on("close", (code) => resolve({ code, stdout, stderr }));
             });
 
-            try {
-                if (!fs.existsSync(solvedImagePath)) {
-                    throw new Error("Failed to generate the analyzed chess image.");
+            const solvedPaths = (await fs.promises.readdir(tempDir))
+                .filter((name) => /^solved_chessboard_(white|black)_bottom\.png$/i.test(name))
+                .sort()
+                .map((name) => path.join(tempDir, name));
+
+            if (solvedPaths.length === 0) {
+                const output = `${pythonResult.stderr}\n${pythonResult.stdout}`;
+                if (/No module named|ModuleNotFoundError/.test(output)) {
+                    throw new Error("CHESS_SOLVER_DEPENDENCIES_MISSING");
                 }
-
-                const fenResult = pythonOutput.match(/Predicted FEN: (.+)/)?.[1];
-                const whiteMove = pythonOutput.match(/Best move for White: (.+)/)?.[1];
-                const blackMove = pythonOutput.match(/Best move for Black: (.+)/)?.[1];
-                const solvedAttachment = new AttachmentBuilder(solvedImagePath, { name: "analyzed_chess.png" });
-
-                const responseEmbed = {
-                    title: "Chess Position Analysis",
-                    fields: [
-                        { name: "FEN Notation", value: fenResult || "Not found", inline: false },
-                        { name: "Best Move for White", value: whiteMove || "Not found", inline: true },
-                        { name: "Best Move for Black", value: blackMove || "Not found", inline: true },
-                        {
-                            name: "Board Orientation",
-                            value: `${bottomColor.charAt(0).toUpperCase() + bottomColor.slice(1)} pieces on bottom`,
-                            inline: false,
-                        },
-                    ],
-                    image: { url: "attachment://analyzed_chess.png" },
-                    footer: { text: "Analyzed with Stockfish" },
-                };
-
-                await interaction.editReply({
-                    content: null,
-                    embeds: [responseEmbed],
-                    files: [solvedAttachment],
-                });
-            } catch (processingError) {
-                throw new Error("Failed to prepare or send the chess analysis result.", {
-                    cause: processingError,
-                });
+                const reason = /no legal moves/i.test(output)
+                    ? "The detected position has no legal moves."
+                    : "The image could not be read as a valid chess position.";
+                throw new Error(`CHESS_SOLVER_NO_OUTPUT: ${reason}`);
             }
+
+            const files = solvedPaths.map((filePath) => {
+                const name = path.basename(filePath);
+                return { name, attachment: new AttachmentBuilder(filePath, { name }) };
+            });
+            const embeds = files.map(({ name }) => {
+                const orientation = name.includes("black_bottom") ? "Black on bottom" : "White on bottom";
+                return {
+                    title: `Solved board - ${orientation}`,
+                    image: { url: `attachment://${name}` },
+                };
+            });
+            const partialFailure = pythonResult.code !== 0;
+
+            await interaction.editReply({
+                content: partialFailure
+                    ? "Some solved board images are attached, but the solver could not analyze every orientation. The position may have no legal moves or the image may be unclear."
+                    : "Solved chessboard image(s):",
+                embeds,
+                files: files.map(({ attachment }) => attachment),
+            });
         } catch (error) {
             console.error("Chess solver error:", error);
 
-            const noChessboardFound = error instanceof Error && error.message.includes("NO_CHESSBOARD:");
-            const userMessage = noChessboardFound
-                ? "No chessboard was found in that image. Upload a clear image showing the complete board and try again."
-                : "The chess solver encountered an error while processing your image. Please try again with a clear board image. If the problem continues, contact an administrator.";
+            let userMessage =
+                "There was a problem with the image or the detected position has no legal moves. Upload a clear image of the full board and try again.";
+            if (error instanceof Error && error.message === "CHESS_SOLVER_NOT_INSTALLED") {
+                userMessage = "Chess Solver is not installed on this server.";
+            } else if (error instanceof Error && error.message.startsWith("CHESS_SOLVER_NO_OUTPUT:")) {
+                userMessage = `${error.message.slice("CHESS_SOLVER_NO_OUTPUT:".length).trim()} Upload a clear image of the full board and try again.`;
+            } else if (error instanceof Error && error.message === "CHESS_SOLVER_DEPENDENCIES_MISSING") {
+                userMessage = "Chess Solver is installed, but its Python dependencies are missing.";
+            } else if (error?.code === "ENOENT") {
+                userMessage = "Chess Solver could not start because Python is not installed or is not available.";
+            }
 
             try {
-                if (interaction.deferred) {
+                if (interaction.deferred || interaction.replied) {
                     await interaction.editReply(userMessage);
                 } else {
-                    await interaction.reply({
-                        content: userMessage,
-                        ephemeral: true,
-                    });
+                    await interaction.reply({ content: userMessage, ephemeral: true });
                 }
             } catch (replyError) {
                 console.error("Failed to respond to interaction:", replyError);

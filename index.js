@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, REST, Routes } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, REST, Routes, Events } = require("discord.js");
 const { Player } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const fs = require("node:fs");
@@ -90,7 +90,7 @@ loadEvents(eventsPath);
 
 const rest = new REST().setToken(TOKEN);
 
-client.once("ready", async () => {
+client.once(Events.ClientReady, async () => {
     try {
         const guilds = client.guilds.cache.map((guild) => guild.id);
 

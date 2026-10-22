@@ -3,15 +3,6 @@ const fs = require("fs");
 const util = require("util");
 const execAsync = util.promisify(require("child_process").exec);
 
-function isDocker() {
-    if (fs.existsSync("/.dockerenv")) return true;
-    if (fs.existsSync("/proc/1/cgroup")) {
-        const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
-        return cgroup.includes("docker");
-    }
-    return false;
-}
-
 async function executeCommand(command, cleanupFiles = []) {
     try {
         const { stdout, stderr } = await execAsync(command);
@@ -57,7 +48,7 @@ async function executeJava(filePath, classFile) {
 }
 
 async function executeCode(code, language) {
-    if (!isDocker()) return "Error: The code can only be executed inside a Docker container.";
+    return "Error: The code can only be executed inside an isolated environment.";
 
     const fileExtensionMap = {
         js: "js",
