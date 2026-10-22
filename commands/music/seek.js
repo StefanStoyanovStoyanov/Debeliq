@@ -51,16 +51,20 @@ module.exports = {
             return;
         }
 
+        await interaction.deferReply();
         try {
-            await queue.node.seek(seconds * 1000);
-            await interaction.reply(
+            const seeked = await queue.node.seek(seconds * 1000);
+            if (!seeked) {
+                await interaction.editReply("Failed to seek in the current song. Please try again.");
+                return;
+            }
+
+            await interaction.editReply(
                 `Seeked to ${new Date(seconds * 1000).toISOString().substr(14, 5)} in **${currentTrack.title}**.`,
             );
         } catch (err) {
-            await interaction.reply({
-                content: `Failed to seek: ${err}`,
-                ephemeral: true,
-            });
+            console.error("Error in seek command:", err);
+            await interaction.editReply("Failed to seek in the current song. Please try again.");
         }
     },
 };
