@@ -30,8 +30,8 @@ module.exports = {
             const scriptPath = path.join(solverDir, "src", "chess_solve.py");
             const requiredFiles = [
                 scriptPath,
-                path.join(solverDir, "assets", "image_to_fen_model.pb"),
-                path.join(solverDir, "assets", "stockfish.exe"),
+                path.join(solverDir, "models", "image_to_fen_model.pb"),
+                path.join(solverDir, "models", "stockfish.exe"),
             ];
             if (requiredFiles.some((filePath) => !fs.existsSync(filePath))) {
                 throw new Error("CHESS_SOLVER_NOT_INSTALLED");
