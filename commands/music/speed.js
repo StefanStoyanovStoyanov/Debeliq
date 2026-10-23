@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const { AudioFilters, useQueue } = require("discord-player");
 
 const SPEED_FILTER_PREFIX = "debel_speed_";
@@ -29,7 +29,7 @@ module.exports = {
         if (!queue || !queue.currentTrack || !queue.node.isPlaying()) {
             await interaction.reply({
                 content: "There is no music currently playing.",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -38,10 +38,12 @@ module.exports = {
         if (speed < 0.5 || speed > 3.0) {
             await interaction.reply({
                 content: "Speed factor must be between 0.5 and 3.0.",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
+
+        await interaction.deferReply();
 
         try {
             const speedFilterName = `${SPEED_FILTER_PREFIX}${speed.toString().replace(".", "_")}`;
@@ -52,13 +54,12 @@ module.exports = {
                 filters.push(speedFilterName);
             }
             await queue.filters.ffmpeg.setFilters(filters);
-            await interaction.reply(`Playback speed set to ${speed}x.`);
         } catch (err) {
             console.error("Error in speed command:", err);
-            await interaction.reply({
-                content: "Failed to change playback speed. Please try again.",
-                ephemeral: true,
-            });
+            await interaction.editReply("Failed to change playback speed. Please try again.");
+            return;
         }
+
+        await interaction.editReply(`Playback speed set to ${speed}x.`);
     },
 };
