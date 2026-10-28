@@ -178,7 +178,11 @@ function executeInContainer(code, language) {
             if (stopping) return;
             if (exitCode !== 0) {
                 const details = [stderr.trim(), stdout.trim()].filter(Boolean).join("\n");
-                if (/failed to connect to the docker api|cannot connect to the docker daemon|error during connect|is the docker daemon running/i.test(details)) {
+                if (
+                    /failed to connect to the docker api|cannot connect to the docker daemon|error during connect|is the docker daemon running/i.test(
+                        details,
+                    )
+                ) {
                     finish({
                         error: `Error: Docker daemon is unavailable. Start Docker Desktop with its Linux container engine enabled, then try again.\n${details}`,
                     });
