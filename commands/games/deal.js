@@ -179,17 +179,26 @@ module.exports = {
     async execute(interaction) {
         const gameState = createGameState();
         shuffleCases(gameState.cases);
-        gameStates.set(interaction.user.id, gameState);
 
         const embed = createGameEmbed(gameState);
         const buttons = createCaseButtons(gameState);
 
         await interaction.reply({ embeds: [embed], components: buttons });
+        const reply = await interaction.fetchReply();
+        gameStates.set(reply.id, { userId: interaction.user.id, gameState });
     },
 
     async handleButton(interaction) {
-        const gameState = gameStates.get(interaction.user.id);
-        if (!gameState || !gameState.isActive) return;
+        const storedState = gameStates.get(interaction.message.id);
+        if (!storedState || !storedState.gameState.isActive) {
+            await interaction.reply({ content: "This game is no longer active.", ephemeral: true });
+            return;
+        }
+        if (storedState.userId !== interaction.user.id) {
+            await interaction.reply({ content: "Only the player who started this game can use these buttons.", ephemeral: true });
+            return;
+        }
+        const gameState = storedState.gameState;
 
         let embed;
         let components;
@@ -197,12 +206,38 @@ module.exports = {
 
         if (interaction.customId.startsWith("page_")) {
             const [_, direction, currentPage] = interaction.customId.split("_");
-            const newPage = direction === "prev" ? parseInt(currentPage) - 1 : parseInt(currentPage) + 1;
+            const page = Number(currentPage);
+            if (
+                gameState.isAwaitingDeal ||
+                !Number.isInteger(page) ||
+                (direction !== "prev" && direction !== "next") ||
+                page < 1 ||
+                page > 2
+            ) {
+                await interaction.reply({ content: "That game action is no longer available.", ephemeral: true });
+                return;
+            }
+            const newPage = direction === "prev" ? page - 1 : page + 1;
+            if (newPage < 1 || newPage > 2) {
+                await interaction.reply({ content: "That game action is no longer available.", ephemeral: true });
+                return;
+            }
 
             components = createCaseButtons(gameState, [gameState.yourCase], newPage);
             embed = createGameEmbed(gameState, "Navigating between case pages.");
         } else if (interaction.customId.startsWith("case_")) {
-            const chosenNumber = parseInt(interaction.customId.split("_")[1]);
+            const chosenNumber = Number(interaction.customId.slice("case_".length));
+            const chosenCase = gameState.cases.find((c) => c.number === chosenNumber);
+            if (
+                gameState.isAwaitingDeal ||
+                !Number.isInteger(chosenNumber) ||
+                chosenNumber < 1 ||
+                chosenNumber > 26 ||
+                (gameState.yourCase === 0 ? !chosenCase : !chosenCase || chosenNumber === gameState.yourCase)
+            ) {
+                await interaction.reply({ content: "That case is not available.", ephemeral: true });
+                return;
+            }
 
             if (gameState.yourCase === 0) {
                 gameState.yourCase = chosenNumber;
@@ -210,7 +245,6 @@ module.exports = {
                 embed = createGameEmbed(gameState, additionalInfo);
                 components = createCaseButtons(gameState, [chosenNumber], 1);
             } else {
-                const chosenCase = gameState.cases.find((c) => c.number === chosenNumber);
                 additionalInfo = `Case ${chosenNumber} contained ${formatCurrency(chosenCase.value)}!`;
                 removeCase(chosenNumber, gameState.cases);
                 gameState.remainingCasesToPick--;
@@ -235,7 +269,12 @@ module.exports = {
                 embed = createGameEmbed(gameState, additionalInfo);
             }
         } else if (interaction.customId.startsWith("deal_")) {
-            const decision = interaction.customId.split("_")[1];
+            const decision =
+                interaction.customId === "deal_yes" ? "yes" : interaction.customId === "deal_no" ? "no" : null;
+            if (!gameState.isAwaitingDeal || !decision) {
+                await interaction.reply({ content: "That deal is no longer available.", ephemeral: true });
+                return;
+            }
 
             if (decision === "yes") {
                 if (gameState.cases.length === 2) {
@@ -264,8 +303,14 @@ module.exports = {
             }
             gameState.isAwaitingDeal = false;
             embed = createGameEmbed(gameState, additionalInfo);
+        } else {
+            await interaction.reply({ content: "That game action is not available.", ephemeral: true });
+            return;
         }
 
         await interaction.update({ embeds: [embed], components: components || [] });
+        if (!gameState.isActive) {
+            gameStates.delete(interaction.message.id);
+        }
     },
 };

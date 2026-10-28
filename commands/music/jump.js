@@ -6,13 +6,25 @@ module.exports = {
         .setName("jump")
         .setDescription("Jump to a specific position in the queue")
         .addIntegerOption((option) =>
-            option.setName("position").setDescription("The position in the queue to jump to").setRequired(true),
+            option
+                .setName("position")
+                .setDescription("The position in the queue to jump to")
+                .setMinValue(1)
+                .setRequired(true),
         ),
 
     async execute(interaction) {
+        if (!interaction.member.voice.channel) {
+            await interaction.reply({
+                content: "You are not connected to a voice channel.",
+                ephemeral: true,
+            });
+            return;
+        }
+
         const queue = useQueue(interaction.guild.id);
 
-        if (!queue || !queue.node.isPlaying()) {
+        if (!queue || !queue.currentTrack) {
             await interaction.reply({
                 content: "There is no music currently playing.",
                 ephemeral: true,
@@ -30,7 +42,13 @@ module.exports = {
             return;
         }
 
-        queue.node.skipTo(position - 1);
+        if (!queue.node.skipTo(position - 1)) {
+            await interaction.reply({
+                content: "Could not jump to that track. Please try again.",
+                ephemeral: true,
+            });
+            return;
+        }
 
         await interaction.reply(`Jumped to track #${position}.`);
     },

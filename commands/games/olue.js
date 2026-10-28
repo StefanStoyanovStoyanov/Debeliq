@@ -6,35 +6,54 @@ const dataDir = path.join(__dirname, "..", "..", "data");
 const olueDataPath = path.join(dataDir, "olue_data.json");
 
 async function ensureDataDir() {
-    try {
-        await fs.mkdir(dataDir, { recursive: true });
-    } catch {}
+    await fs.mkdir(dataDir, { recursive: true });
 }
 
 async function loadOlueData() {
+    await ensureDataDir();
+    let data;
     try {
-        await ensureDataDir();
-        try {
-            await fs.access(olueDataPath);
-        } catch {
-            await fs.writeFile(olueDataPath, JSON.stringify({}), "utf8");
-        }
-
-        const data = await fs.readFile(olueDataPath, "utf8");
-        return JSON.parse(data || "{}");
+        data = await fs.readFile(olueDataPath, "utf8");
     } catch (error) {
-        console.error("Error loading Olue data:", error);
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
+        await fs.writeFile(olueDataPath, "{}", "utf8");
         return {};
     }
+
+    const parsedData = JSON.parse(data || "{}");
+    if (!parsedData || typeof parsedData !== "object" || Array.isArray(parsedData)) {
+        throw new Error("Olue data must contain an object.");
+    }
+    return parsedData;
 }
 
 async function saveOlueData(data) {
-    try {
-        await ensureDataDir();
-        await fs.writeFile(olueDataPath, JSON.stringify(data, null, 2), "utf8");
-    } catch (error) {
-        console.error("Error saving Olue data:", error);
+    await ensureDataDir();
+    await fs.writeFile(olueDataPath, JSON.stringify(data, null, 2), "utf8");
+}
+
+let dataUpdateQueue = Promise.resolve();
+
+function updateOlueScore(userId, score) {
+    const update = dataUpdateQueue.then(async () => {
+        const savedData = await loadOlueData();
+        savedData[userId] = { score };
+        await saveOlueData(savedData);
+    });
+    dataUpdateQueue = update.catch((error) => {
+        console.error("Error updating Olue data:", error);
+    });
+    return update;
+}
+
+function getScore(data, userId) {
+    const score = data[userId]?.score ?? 0;
+    if (!Number.isSafeInteger(score) || score < 0) {
+        throw new Error(`Invalid saved score for user ${userId}.`);
     }
+    return score;
 }
 
 function rng(min, max) {
@@ -56,7 +75,6 @@ function createGameGrid(score = 0, specialNumbers = null, selectedCells = new Se
     const currentSpecialNumbers = specialNumbers || generateSpecialNumbers();
     const totalColumns = 10;
     const maxColumnsPerRow = 5;
-    const useCompact = true;
 
     let gridChunks = [];
     for (let startCol = 0; startCol < totalColumns; startCol += maxColumnsPerRow) {
@@ -103,39 +121,45 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
         const savedData = await loadOlueData();
-        const currentScore = savedData[userId]?.score ?? 0;
+        const currentScore = getScore(savedData, userId);
 
         const userState = {
             score: currentScore,
             selectedCells: new Set(),
             specialNumbers: generateSpecialNumbers(),
+            processing: false,
         };
-
-        gameStates.set(userId, userState);
 
         const { content, components } = createGameGrid(currentScore, userState.specialNumbers);
         await interaction.reply({ content, components });
+        const reply = await interaction.fetchReply();
+        gameStates.set(reply.id, { userId, userState });
     },
 
     async handleButton(interaction) {
-        const userId = interaction.user.id;
-        let userState = gameStates.get(userId);
-
-        if (!userState) {
-            userState = {
-                score: 0,
-                selectedCells: new Set(),
-                specialNumbers: generateSpecialNumbers(),
-            };
-            gameStates.set(userId, userState);
+        const storedState = gameStates.get(interaction.message.id);
+        if (!storedState) {
+            await interaction.reply({ content: "This game is no longer active.", ephemeral: true });
+            return;
         }
+        if (storedState.userId !== interaction.user.id) {
+            await interaction.reply({ content: "Only the player who started this game can use these buttons.", ephemeral: true });
+            return;
+        }
+        const userId = storedState.userId;
+        const userState = storedState.userState;
+        if (userState.processing) {
+            await interaction.reply({ content: "Your previous move is still being processed.", ephemeral: true });
+            return;
+        }
+        userState.processing = true;
 
         const customId = interaction.customId;
 
         try {
-            if (customId === "start" || customId === "retry") {
+            if (customId === "retry") {
                 const savedData = await loadOlueData();
-                const currentScore = savedData[userId]?.score ?? 0;
+                const currentScore = getScore(savedData, userId);
                 userState.score = currentScore;
                 userState.selectedCells = new Set();
                 userState.specialNumbers = generateSpecialNumbers();
@@ -146,16 +170,22 @@ module.exports = {
             }
 
             if (customId.startsWith("number_")) {
-                const chosenNumber = parseInt(customId.split("_")[1]);
+                const chosenNumber = Number(customId.slice("number_".length));
+                if (
+                    !Number.isInteger(chosenNumber) ||
+                    chosenNumber < 1 ||
+                    chosenNumber > 10 ||
+                    userState.selectedCells.has(chosenNumber)
+                ) {
+                    await interaction.reply({ content: "That number is not available.", ephemeral: true });
+                    return;
+                }
 
                 if (userState.specialNumbers.includes(chosenNumber)) {
+                    const nextScore = userState.score + 1;
+                    await updateOlueScore(userId, nextScore);
                     userState.selectedCells.add(chosenNumber);
-                    userState.score += 1;
-
-                    const savedData = await loadOlueData();
-                    savedData[userId] = savedData[userId] || { score: 0 };
-                    savedData[userId].score = userState.score;
-                    await saveOlueData(savedData);
+                    userState.score = nextScore;
 
                     if (userState.specialNumbers.every((num) => userState.selectedCells.has(num))) {
                         userState.selectedCells.clear();
@@ -173,9 +203,7 @@ module.exports = {
                     }
                 } else {
                     const finalScore = userState.score;
-                    const savedData = await loadOlueData();
-                    savedData[userId] = { score: 0 };
-                    await saveOlueData(savedData);
+                    await updateOlueScore(userId, 0);
 
                     userState.score = 0;
                     userState.selectedCells = new Set();
@@ -192,13 +220,18 @@ module.exports = {
                         components: [retryRow],
                     });
                 }
+                return;
             }
+
+            await interaction.reply({ content: "That game action is not available.", ephemeral: true });
         } catch (error) {
             console.error("Error in handleButton:", error);
             await interaction.reply({
                 content: "There was an error processing your move. Please try again.",
                 ephemeral: true,
             });
+        } finally {
+            userState.processing = false;
         }
     },
 };

@@ -52,7 +52,7 @@ module.exports = {
         }
 
         const queue = useQueue(interaction.guild.id);
-        if (!queue || !queue.currentTrack || !queue.node.isPlaying()) {
+        if (!queue || !queue.currentTrack) {
             await interaction.reply({
                 content: "There is no music currently playing.",
                 flags: MessageFlags.Ephemeral,

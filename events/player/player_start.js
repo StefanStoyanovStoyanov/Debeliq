@@ -1,8 +1,10 @@
+const { sendQueueMessage } = require("../../utils/queue_message");
+
 module.exports = {
     name: "playerStart",
     type: "player",
     once: false,
     execute(queue, track) {
-        queue.metadata.channel.send(`Started playing **${track.title}**.`);
+        return sendQueueMessage(queue, `Started playing **${track.title}**.`);
     },
 };

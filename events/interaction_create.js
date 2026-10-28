@@ -17,7 +17,9 @@ module.exports = {
                         content: "That command doesn't seem to exist.",
                         flags: [MessageFlags.Ephemeral],
                     });
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to respond to missing command interaction:", responseError);
+                }
                 return;
             }
             try {
@@ -36,7 +38,9 @@ module.exports = {
                             flags: [MessageFlags.Ephemeral],
                         });
                     }
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to respond to command interaction:", responseError);
+                }
             }
         } else if (interaction.isButton()) {
             const originalInteraction = interaction.message.interaction;
@@ -44,7 +48,9 @@ module.exports = {
                 console.warn(`Button clicked on a message not originating from a slash command: ${interaction.customId}`);
                 try {
                     await interaction.deferUpdate();
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to acknowledge unrelated button interaction:", responseError);
+                }
                 return;
             }
 
@@ -55,7 +61,9 @@ module.exports = {
                 );
                 try {
                     await interaction.deferUpdate();
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to acknowledge button interaction:", responseError);
+                }
                 return;
             }
 
@@ -67,7 +75,9 @@ module.exports = {
                         content: "Could not process this button click (originating command not found).",
                         flags: [MessageFlags.Ephemeral],
                     });
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to respond to button interaction:", responseError);
+                }
                 return;
             }
 
@@ -77,7 +87,9 @@ module.exports = {
                 );
                 try {
                     await interaction.deferUpdate();
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to acknowledge unsupported button interaction:", responseError);
+                }
                 return;
             }
 
@@ -97,7 +109,9 @@ module.exports = {
                             flags: [MessageFlags.Ephemeral],
                         });
                     }
-                } catch (e) {}
+                } catch (responseError) {
+                    console.error("Failed to respond to button interaction:", responseError);
+                }
             }
         }
     },

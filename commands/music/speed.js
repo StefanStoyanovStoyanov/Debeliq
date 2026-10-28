@@ -25,8 +25,16 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        if (!interaction.member.voice.channel) {
+            await interaction.reply({
+                content: "You are not connected to a voice channel.",
+                flags: MessageFlags.Ephemeral,
+            });
+            return;
+        }
+
         const queue = useQueue(interaction.guild.id);
-        if (!queue || !queue.currentTrack || !queue.node.isPlaying()) {
+        if (!queue || !queue.currentTrack) {
             await interaction.reply({
                 content: "There is no music currently playing.",
                 flags: MessageFlags.Ephemeral,

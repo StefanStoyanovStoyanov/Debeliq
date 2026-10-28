@@ -1,4 +1,5 @@
 const { QueueRepeatMode } = require("discord-player");
+const { sendQueueMessage } = require("../../utils/queue_message");
 
 module.exports = {
     name: "emptyQueue",
@@ -6,7 +7,7 @@ module.exports = {
     once: false,
     execute(queue) {
         if (queue.repeatMode !== QueueRepeatMode.AUTOPLAY) {
-            queue.metadata.channel.send("Queue finished.");
+            return sendQueueMessage(queue, "Queue finished.");
         }
     },
 };

@@ -26,7 +26,7 @@ module.exports = {
             }
 
             const solverDir =
-                process.env.CHESS_SOLVER_DIR || path.resolve(__dirname, "../../../Chess Solver");
+                process.env.CHESS_SOLVER_DIR || path.resolve(__dirname, "../../../Chess-Solver");
             const scriptPath = path.join(solverDir, "src", "chess_solve.py");
             const requiredFiles = [
                 scriptPath,

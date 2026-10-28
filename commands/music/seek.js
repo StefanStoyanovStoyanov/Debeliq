@@ -10,8 +10,16 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        if (!interaction.member.voice.channel) {
+            await interaction.reply({
+                content: "You are not connected to a voice channel.",
+                ephemeral: true,
+            });
+            return;
+        }
+
         const queue = useQueue(interaction.guild.id);
-        if (!queue || !queue.node.isPlaying()) {
+        if (!queue || !queue.currentTrack) {
             await interaction.reply({
                 content: "There is no music currently playing.",
                 ephemeral: true,
@@ -30,7 +38,16 @@ module.exports = {
             return;
         }
         if (match[1] && match[2]) {
-            seconds = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+            const minutes = Number(match[1]);
+            const remainder = Number(match[2]);
+            if (remainder > 59) {
+                await interaction.reply({
+                    content: "Invalid timestamp format. Use mm:ss with seconds from 00 to 59, or total seconds.",
+                    ephemeral: true,
+                });
+                return;
+            }
+            seconds = minutes * 60 + remainder;
         } else if (match[3]) {
             seconds = parseInt(match[3], 10);
         }
@@ -60,7 +77,7 @@ module.exports = {
             }
 
             await interaction.editReply(
-                `Seeked to ${new Date(seconds * 1000).toISOString().substr(14, 5)} in **${currentTrack.title}**.`,
+                `Seeked to ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} in **${currentTrack.title}**.`,
             );
         } catch (err) {
             console.error("Error in seek command:", err);

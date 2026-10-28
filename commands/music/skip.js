@@ -15,7 +15,7 @@ module.exports = {
         }
 
         const queue = useQueue(interaction.guild.id);
-        if (!queue || !queue.node.isPlaying()) {
+        if (!queue || !queue.currentTrack) {
             await interaction.reply({
                 content: "There is no music currently playing.",
                 ephemeral: true,
@@ -23,8 +23,15 @@ module.exports = {
             return;
         }
 
-        queue.node.skip();
+        const trackTitle = queue.currentTrack.title;
+        if (!queue.node.skip()) {
+            await interaction.reply({
+                content: "Could not skip the current track. Please try again.",
+                ephemeral: true,
+            });
+            return;
+        }
 
-        await interaction.reply(`Skipping **${queue.currentTrack.title}**.`);
+        await interaction.reply(`Skipping **${trackTitle}**.`);
     },
 };

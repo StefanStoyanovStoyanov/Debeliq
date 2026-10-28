@@ -58,6 +58,13 @@ module.exports = {
             });
         }
 
+        if (!interaction.channel || typeof interaction.channel.createMessageCollector !== "function") {
+            return interaction.reply({
+                content: "This game can only be played in a text channel.",
+                ephemeral: true,
+            });
+        }
+
         await handleGuessingMode(interaction, client, gameKey);
     },
 };
@@ -74,10 +81,15 @@ async function handleGuessingMode(interaction, client, gameKey) {
 
     client.activeGames.set(gameKey, gameData);
 
-    await interaction.reply(
-        `I've generated a 4-digit number (all unique digits, not starting with zero).\n` +
-            `Everyone in this channel can guess. Type a 4-digit guess, or type \`stop\` to end the game.`,
-    );
+    try {
+        await interaction.reply(
+            `I've generated a 4-digit number (all unique digits, not starting with zero).\n` +
+                `Everyone in this channel can guess. Type a 4-digit guess, or type \`stop\` to end the game.`,
+        );
+    } catch (error) {
+        client.activeGames.delete(gameKey);
+        throw error;
+    }
 
     const collector = interaction.channel.createMessageCollector({
         filter: (message) => !message.author.bot && message.channelId === interaction.channelId,
@@ -85,34 +97,38 @@ async function handleGuessingMode(interaction, client, gameKey) {
     });
 
     collector.on("collect", async (message) => {
-        const input = message.content.trim();
-        const normalizedInput = input.toLowerCase();
+        try {
+            const input = message.content.trim();
+            const normalizedInput = input.toLowerCase();
 
-        if (normalizedInput === "stop") {
-            await message.reply("Game stopped. You can start a new one anytime.");
-            collector.stop("manual");
-            return;
-        }
+            if (normalizedInput === "stop") {
+                collector.stop("manual");
+                await message.reply("Game stopped. You can start a new one anytime.");
+                return;
+            }
 
-        if (!/^\d{4}$/.test(input) || hasDuplicates(input.split(""))) {
-            return;
-        }
+            if (!/^\d{4}$/.test(input) || input[0] === "0" || hasDuplicates(input.split(""))) {
+                return;
+            }
 
-        gameData.guesses++;
-        const { bulls, cows } = calculateCowsAndBulls(gameData.secretNumber, input);
+            gameData.guesses++;
+            const { bulls, cows } = calculateCowsAndBulls(gameData.secretNumber, input);
 
-        if (bulls === 4) {
-            const replyContent = `Congratulations, ${message.author.username}! You guessed the number **${
-                gameData.secretNumber
-            }** in **${gameData.guesses}${ending(gameData.guesses)}** attempt!`;
-            await message.reply(replyContent);
-            collector.stop();
-        } else {
-            await message.reply(
-                `Your guess \`${input}\` has **${bulls}** bull${bulls !== 1 ? "s" : ""} and **${cows}** cow${
-                    cows !== 1 ? "s" : ""
-                }.`,
-            );
+            if (bulls === 4) {
+                const replyContent = `Congratulations, ${message.author.username}! You guessed the number **${
+                    gameData.secretNumber
+                }** in **${gameData.guesses}${ending(gameData.guesses)}** attempt!`;
+                collector.stop("won");
+                await message.reply(replyContent);
+            } else {
+                await message.reply(
+                    `Your guess \`${input}\` has **${bulls}** bull${bulls !== 1 ? "s" : ""} and **${cows}** cow${
+                        cows !== 1 ? "s" : ""
+                    }.`,
+                );
+            }
+        } catch (error) {
+            console.error("Error processing Cows and Bulls guess:", error);
         }
     });
 
@@ -121,7 +137,9 @@ async function handleGuessingMode(interaction, client, gameKey) {
             client.activeGames.delete(gameKey);
         }
         if (reason === "time") {
-            interaction.followUp("The game has ended due to inactivity.");
+            interaction
+                .followUp("The game has ended due to inactivity.")
+                .catch((error) => console.error("Failed to announce Cows and Bulls timeout:", error));
         }
     });
 }

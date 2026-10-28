@@ -5,8 +5,15 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const config = require("./config.json");
-const TOKEN = config.token;
-const CLIENT_ID = config.client_id;
+const TOKEN = config.token || process.env.DISCORD_TOKEN;
+const CLIENT_ID = config.client_id || process.env.DISCORD_CLIENT_ID;
+
+if (!TOKEN) {
+    throw new Error("Set token in config.json or provide the DISCORD_TOKEN environment variable.");
+}
+if (!CLIENT_ID) {
+    throw new Error("Set client_id in config.json or provide the DISCORD_CLIENT_ID environment variable.");
+}
 
 const client = new Client({
     intents: [
@@ -29,10 +36,6 @@ const player = new Player(client, {
     },
 });
 client.player = player;
-
-player.extractors.loadMulti(DefaultExtractors).catch((error) => {
-    console.error("Failed to load Discord Player extractors:", error);
-});
 
 const commandsToRegister = [];
 const commandsPath = path.join(__dirname, "commands");
@@ -61,7 +64,6 @@ function loadCommands(directory) {
 loadCommands(commandsPath);
 
 const eventsPath = path.join(__dirname, "events");
-let eventCount = 0;
 
 function loadEvents(directory) {
     const eventFiles = fs.readdirSync(directory, { withFileTypes: true });
@@ -79,7 +81,6 @@ function loadEvents(directory) {
                 } else {
                     emitter.on(event.name, (...args) => event.execute(...args, client));
                 }
-                eventCount++;
             } catch (error) {
                 console.error(`[ERROR] Could not load event at ${filePath}:`, error);
             }
@@ -104,7 +105,10 @@ client.once(Events.ClientReady, async () => {
     }
 });
 
-client.login(TOKEN).catch((error) => {
-    console.error("Failed to log in to Discord:", error);
-    process.exit(1);
-});
+player.extractors
+    .loadMulti(DefaultExtractors)
+    .then(() => client.login(TOKEN))
+    .catch((error) => {
+        console.error("Failed to initialize the Discord bot:", error);
+        process.exit(1);
+    });
