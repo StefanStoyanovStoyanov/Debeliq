@@ -6,7 +6,7 @@ module.exports = {
         .setName("seek")
         .setDescription("Seek to a specific timestamp in the current song.")
         .addStringOption((option) =>
-            option.setName("timestamp").setDescription("The timestamp to seek to (e.g. 1:23 or 83)").setRequired(true),
+            option.setName("timestamp").setDescription("The timestamp to seek to (e.g. 1:23 or 83).").setRequired(true),
         ),
 
     async execute(interaction) {

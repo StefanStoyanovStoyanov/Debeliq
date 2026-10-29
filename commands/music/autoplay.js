@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 const { useQueue, QueueRepeatMode } = require("discord-player");
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("autoplay").setDescription("Toggle autoplay mode for related songs"),
+    data: new SlashCommandBuilder().setName("autoplay").setDescription("Toggle autoplay mode for related songs."),
 
     async execute(interaction) {
         const channel = interaction.member.voice.channel;

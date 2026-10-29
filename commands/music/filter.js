@@ -36,7 +36,7 @@ module.exports = {
         .addStringOption((option) =>
             option
                 .setName("effect")
-                .setDescription("Choose an effect to toggle, or Off to clear all audio effects")
+                .setDescription("Choose an effect to toggle, or Off to clear all audio effects.")
                 .setRequired(true)
                 .addChoices(...FILTER_CHOICES.map(([name, value]) => ({ name, value }))),
         ),

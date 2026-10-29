@@ -18,7 +18,7 @@ module.exports = {
         .addNumberOption((option) =>
             option
                 .setName("factor")
-                .setDescription("Playback speed (0.5x to 3x)")
+                .setDescription("Playback speed (0.5x to 3x).")
                 .setMinValue(0.5)
                 .setMaxValue(3.0)
                 .setRequired(true),

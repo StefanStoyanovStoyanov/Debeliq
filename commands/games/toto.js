@@ -22,13 +22,13 @@ function notInRange(array) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("toto")
-        .setDescription("Play Toto 6/49")
-        .addIntegerOption((option) => option.setName("1st").setDescription("Number between 1 and 49").setRequired(true))
-        .addIntegerOption((option) => option.setName("2nd").setDescription("Number between 1 and 49").setRequired(true))
-        .addIntegerOption((option) => option.setName("3rd").setDescription("Number between 1 and 49").setRequired(true))
-        .addIntegerOption((option) => option.setName("4th").setDescription("Number between 1 and 49").setRequired(true))
-        .addIntegerOption((option) => option.setName("5th").setDescription("Number between 1 and 49").setRequired(true))
-        .addIntegerOption((option) => option.setName("6th").setDescription("Number between 1 and 49").setRequired(true)),
+        .setDescription("Play Toto 6/49.")
+        .addIntegerOption((option) => option.setName("1st").setDescription("Number between 1 and 49.").setRequired(true))
+        .addIntegerOption((option) => option.setName("2nd").setDescription("Number between 1 and 49.").setRequired(true))
+        .addIntegerOption((option) => option.setName("3rd").setDescription("Number between 1 and 49.").setRequired(true))
+        .addIntegerOption((option) => option.setName("4th").setDescription("Number between 1 and 49.").setRequired(true))
+        .addIntegerOption((option) => option.setName("5th").setDescription("Number between 1 and 49.").setRequired(true))
+        .addIntegerOption((option) => option.setName("6th").setDescription("Number between 1 and 49.").setRequired(true)),
 
     async execute(interaction) {
         try {
@@ -84,22 +84,22 @@ module.exports = {
             let resultMessage;
             switch (correctGuesses) {
                 case 6:
-                    resultMessage = `Congratulations! You've won the jackpot of **${prize}**!`;
+                    resultMessage = `Congratulations. You've won the jackpot of **${prize}**.`;
                     break;
                 case 5:
-                    resultMessage = `Congratulations! You've won **${prize}**!`;
+                    resultMessage = `Congratulations. You've won **${prize}**.`;
                     break;
                 case 4:
-                    resultMessage = `Congratulations! You've won **${prize}**!`;
+                    resultMessage = `Congratulations. You've won **${prize}**.`;
                     break;
                 case 3:
-                    resultMessage = `Congratulations! You've won **${prize}**!`;
+                    resultMessage = `Congratulations. You've won **${prize}**.`;
                     break;
                 case 2:
-                    resultMessage = `Congratulations! You've won **${prize}**!`;
+                    resultMessage = `Congratulations. You've won **${prize}**.`;
                     break;
                 case 1:
-                    resultMessage = `Congratulations! You've won **${prize}**!`;
+                    resultMessage = `Congratulations. You've won **${prize}**.`;
                     break;
                 default:
                     resultMessage = `Sorry, you didn't win anything this time.`;

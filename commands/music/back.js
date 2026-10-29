@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 const { useQueue, useHistory } = require("discord-player");
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("back").setDescription("Play the previous track"),
+    data: new SlashCommandBuilder().setName("back").setDescription("Play the previous track."),
 
     async execute(interaction) {
         const channel = interaction.member.voice.channel;

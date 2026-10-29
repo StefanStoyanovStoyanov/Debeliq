@@ -38,11 +38,11 @@ function createProgressBar(queue, track) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("queue")
-        .setDescription("Show songs in the queue and current track")
+        .setDescription("Show songs in the queue and current track.")
         .addStringOption((option) =>
             option
                 .setName("view")
-                .setDescription("Choose what to view")
+                .setDescription("Choose what to view.")
                 .addChoices(
                     { name: "First 10 songs", value: "first" },
                     { name: "Last 10 songs", value: "last" },

@@ -47,13 +47,13 @@ function calculateCowsAndBulls(secret, guess) {
 }
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("cows_bulls").setDescription("Play a game of Cows and Bulls!"),
+    data: new SlashCommandBuilder().setName("cows_bulls").setDescription("Play a game of Cows and Bulls."),
 
     async execute(interaction, client) {
         const gameKey = `cows_bulls:${interaction.channelId}`;
         if (client.activeGames.has(gameKey)) {
             return interaction.reply({
-                content: "A game of Cows and Bulls is already active in this channel!",
+                content: "A game of Cows and Bulls is already active in this channel.",
                 ephemeral: true,
             });
         }
@@ -115,9 +115,9 @@ async function handleGuessingMode(interaction, client, gameKey) {
             const { bulls, cows } = calculateCowsAndBulls(gameData.secretNumber, input);
 
             if (bulls === 4) {
-                const replyContent = `Congratulations, ${message.author.username}! You guessed the number **${
+                const replyContent = `Congratulations, ${message.author.username}. You guessed the number **${
                     gameData.secretNumber
-                }** in **${gameData.guesses}${ending(gameData.guesses)}** attempt!`;
+                }** in **${gameData.guesses}${ending(gameData.guesses)}** attempt.`;
                 collector.stop("won");
                 await message.reply(replyContent);
             } else {

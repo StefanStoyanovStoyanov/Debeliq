@@ -7,9 +7,9 @@ const { spawn } = require("child_process");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("chess_solver")
-        .setDescription("Analyzes a chess position from an image and finds the best moves")
+        .setDescription("Analyzes a chess position from an image and finds the best moves.")
         .addAttachmentOption((option) =>
-            option.setName("image").setDescription("A chessboard image to analyze").setRequired(true),
+            option.setName("image").setDescription("A chessboard image to analyze.").setRequired(true),
         ),
 
     async execute(interaction) {

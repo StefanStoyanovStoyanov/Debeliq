@@ -4,6 +4,6 @@ module.exports = {
     name: Events.ClientReady,
     once: true,
     execute(client) {
-        console.log(`Ready on ${client.guilds.cache.size} servers as ${client.user.tag}!`);
+        console.log(`Ready on ${client.guilds.cache.size} servers as ${client.user.tag}.`);
     },
 };

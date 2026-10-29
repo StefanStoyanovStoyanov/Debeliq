@@ -4,9 +4,9 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("volume")
-        .setDescription("Set or check the player's volume")
+        .setDescription("Set or check the player's volume.")
         .addIntegerOption((option) =>
-            option.setName("value").setDescription("Volume level"),
+            option.setName("value").setDescription("Volume level."),
         ),
 
     async execute(interaction) {

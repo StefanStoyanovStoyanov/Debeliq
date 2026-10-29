@@ -116,7 +116,7 @@ function createGameGrid(score = 0, specialNumbers = null, selectedCells = new Se
 const gameStates = new Map();
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("olue").setDescription("Play Olue the Game"),
+    data: new SlashCommandBuilder().setName("olue").setDescription("Play Olue the Game."),
 
     async execute(interaction) {
         const userId = interaction.user.id;
@@ -216,7 +216,7 @@ module.exports = {
                     const retryRow = new ActionRowBuilder().addComponents(retryButton);
 
                     await interaction.update({
-                        content: `\`\`\`Game Over! Your final score is ${finalScore}\`\`\``,
+                        content: `\`\`\`Game Over. Your final score is ${finalScore}\`\`\``,
                         components: [retryRow],
                     });
                 }

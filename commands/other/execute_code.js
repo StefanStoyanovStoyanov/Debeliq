@@ -225,11 +225,11 @@ async function executeCode(code, language) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("execute_code")
-        .setDescription("Execute code in different languages in an isolated container")
+        .setDescription("Execute code in different languages in an isolated container.")
         .addStringOption((option) =>
             option
                 .setName("language")
-                .setDescription("Select the language")
+                .setDescription("Select the language.")
                 .addChoices(
                     { name: "JavaScript", value: "js" },
                     { name: "Python", value: "py" },
@@ -240,7 +240,7 @@ module.exports = {
                 )
                 .setRequired(true),
         )
-        .addStringOption((option) => option.setName("code").setDescription("Paste the code here").setRequired(true)),
+        .addStringOption((option) => option.setName("code").setDescription("Paste the code here.").setRequired(true)),
 
     async execute(interaction) {
         await interaction.deferReply();

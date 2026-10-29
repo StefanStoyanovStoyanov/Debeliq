@@ -4,11 +4,11 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("jump")
-        .setDescription("Jump to a specific position in the queue")
+        .setDescription("Jump to a specific position in the queue.")
         .addIntegerOption((option) =>
             option
                 .setName("position")
-                .setDescription("The position in the queue to jump to")
+                .setDescription("The position in the queue to jump to.")
                 .setMinValue(1)
                 .setRequired(true),
         ),

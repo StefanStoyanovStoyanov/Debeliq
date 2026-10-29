@@ -4,11 +4,11 @@ const { useQueue, QueueRepeatMode } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("loop")
-        .setDescription("Enable or disable looping of songs or the whole queue")
+        .setDescription("Enable or disable looping of songs or the whole queue.")
         .addStringOption((option) =>
             option
                 .setName("action")
-                .setDescription("What action you want to perform on the loop")
+                .setDescription("What action you want to perform on the loop.")
                 .setRequired(true)
                 .addChoices({ name: "Off", value: "0" }, { name: "Track", value: "1" }, { name: "Queue", value: "2" }),
         ),

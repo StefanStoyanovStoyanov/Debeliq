@@ -6,10 +6,10 @@ module.exports = {
         .setName("play")
         .setDescription("Play a song or playlist and enables autoplay by default.")
         .addStringOption((option) =>
-            option.setName("query").setDescription("Name or URL of the song or playlist").setRequired(true),
+            option.setName("query").setDescription("Name or URL of the song or playlist.").setRequired(true),
         )
         .addBooleanOption((option) =>
-            option.setName("next").setDescription("Add the song/playlist next in the queue (after current)"),
+            option.setName("next").setDescription("Add the song/playlist next in the queue (after current)."),
         ),
 
     async execute(interaction) {
@@ -19,7 +19,7 @@ module.exports = {
         }
         const channel = interaction.member.voice.channel;
         if (!channel) {
-            return interaction.reply({ content: "You are not connected to a voice channel!", ephemeral: true });
+            return interaction.reply({ content: "You are not connected to a voice channel.", ephemeral: true });
         }
         const query = interaction.options.getString("query", true);
         const playNext = interaction.options.getBoolean("next") ?? false;
@@ -32,7 +32,7 @@ module.exports = {
             });
 
             if (!searchResult || !searchResult.hasTracks()) {
-                return interaction.followUp(`No results found for "${query}"!`);
+                return interaction.followUp(`No results found for "${query}".`);
             }
 
             const playOptions = {
@@ -55,7 +55,7 @@ module.exports = {
             if (searchResult.playlist) {
                 responseMessage = `Playlist **${searchResult.playlist.title}** (${searchResult.tracks.length} songs) ${
                     playNext && queue.tracks.size > 0 ? "added next to the queue" : "enqueued"
-                }!`;
+                }.`;
                 if (queue.repeatMode === QueueRepeatMode.AUTOPLAY && playNext) {
                     responseMessage += "\nAutoplay is active.";
                 } else if (
@@ -68,7 +68,7 @@ module.exports = {
             } else {
                 responseMessage = `**${track.title}** ${
                     playNext && queue.tracks.size > 0 ? "added next to the queue" : "enqueued"
-                }!`;
+                }.`;
                 if (queue.repeatMode === QueueRepeatMode.AUTOPLAY && playNext) {
                     responseMessage += "\nAutoplay is active.";
                 } else if (queue.repeatMode === QueueRepeatMode.AUTOPLAY && !playNext && queue.tracks.size === 0) {
@@ -76,7 +76,7 @@ module.exports = {
                 }
             }
             if (!searchResult.playlist && queue.currentTrack === track && queue.tracks.size === 0) {
-                responseMessage = `Now playing: **${track.title}**!`;
+                responseMessage = `Now playing: **${track.title}**.`;
                 if (queue.repeatMode === QueueRepeatMode.AUTOPLAY) responseMessage += "\nAutoplay is active.";
             }
 

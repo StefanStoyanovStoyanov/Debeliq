@@ -153,7 +153,7 @@ function createGameEmbed(gameState, additionalInfo = "") {
     const embed = new EmbedBuilder().setTitle("Deal or No Deal");
 
     if (gameState.yourCase === 0) {
-        embed.setDescription("Choose your case!");
+        embed.setDescription("Choose your case.");
     } else {
         embed.addFields(
             { name: "Your Case", value: `${gameState.yourCase}`, inline: true },
@@ -174,7 +174,7 @@ function createGameEmbed(gameState, additionalInfo = "") {
 const gameStates = new Map();
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("deal").setDescription("Play Deal or No Deal"),
+    data: new SlashCommandBuilder().setName("deal").setDescription("Play Deal or No Deal."),
 
     async execute(interaction) {
         const gameState = createGameState();
@@ -241,11 +241,11 @@ module.exports = {
 
             if (gameState.yourCase === 0) {
                 gameState.yourCase = chosenNumber;
-                additionalInfo = `You chose case ${chosenNumber} as your case!`;
+                additionalInfo = `You chose case ${chosenNumber} as your case.`;
                 embed = createGameEmbed(gameState, additionalInfo);
                 components = createCaseButtons(gameState, [chosenNumber], 1);
             } else {
-                additionalInfo = `Case ${chosenNumber} contained ${formatCurrency(chosenCase.value)}!`;
+                additionalInfo = `Case ${chosenNumber} contained ${formatCurrency(chosenCase.value)}.`;
                 removeCase(chosenNumber, gameState.cases);
                 gameState.remainingCasesToPick--;
 
@@ -281,23 +281,23 @@ module.exports = {
                     const switchCase = gameState.cases.find((c) => c.number !== gameState.yourCase);
                     additionalInfo = `You switched to case ${switchCase.number} and won ${formatCurrency(
                         switchCase.value,
-                    )}!`;
+                    )}.`;
                 } else {
                     const offer = calculateBankerOffer(gameState.cases);
                     const yourCaseValue = gameState.cases.find((c) => c.number === gameState.yourCase).value;
-                    additionalInfo = `Congratulations! You accepted the deal for ${formatCurrency(offer)}!\nYour case ${
+                    additionalInfo = `Congratulations. You accepted the deal for ${formatCurrency(offer)}.\nYour case ${
                         gameState.yourCase
-                    } contained ${formatCurrency(yourCaseValue)}!`;
+                    } contained ${formatCurrency(yourCaseValue)}.`;
                 }
                 gameState.isActive = false;
             } else {
                 if (gameState.cases.length === 2) {
                     const yourCaseValue = gameState.cases.find((c) => c.number === gameState.yourCase).value;
-                    additionalInfo = `You kept your case and won ${formatCurrency(yourCaseValue)}!`;
+                    additionalInfo = `You kept your case and won ${formatCurrency(yourCaseValue)}.`;
                     gameState.isActive = false;
                 } else {
                     gameState.remainingCasesToPick = calculateRemainingCasesToPick(gameState.cases);
-                    additionalInfo = "You declined the offer. Continue opening cases!";
+                    additionalInfo = "You declined the offer. Continue opening cases.";
                     components = createCaseButtons(gameState, [gameState.yourCase], 1);
                 }
             }

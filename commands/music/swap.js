@@ -4,12 +4,12 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("swap")
-        .setDescription("Swap the positions of two tracks in the queue")
+        .setDescription("Swap the positions of two tracks in the queue.")
         .addIntegerOption((option) =>
-            option.setName("first").setDescription("Position of first track").setMinValue(1).setRequired(true),
+            option.setName("first").setDescription("Position of first track.").setMinValue(1).setRequired(true),
         )
         .addIntegerOption((option) =>
-            option.setName("second").setDescription("Position of second track").setMinValue(1).setRequired(true),
+            option.setName("second").setDescription("Position of second track.").setMinValue(1).setRequired(true),
         ),
 
     async execute(interaction) {
