@@ -17,9 +17,7 @@ function ensureFilesExist() {
     }
 
     if (!fs.existsSync(SUS_WORDS_FILE)) {
-        const defaultWords = "sus\namogus\nimpostor";
-        fs.writeFileSync(SUS_WORDS_FILE, defaultWords, "utf8");
-        console.log(`Created ${SUS_WORDS_FILE} with default words.`);
+        fs.writeFileSync(SUS_WORDS_FILE, "", "utf8");
     }
 }
 
@@ -53,7 +51,7 @@ module.exports = {
                     console.log(`Stefcho sus counter incremented to: ${count} by message: "${message.content}"`);
                 }
             } catch (error) {
-                console.error("Error processing Stefcho sus check:", error);
+                console.error("Error processing stefcho sus counter:", error);
             }
         }
 

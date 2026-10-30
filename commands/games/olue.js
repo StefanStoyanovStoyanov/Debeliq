@@ -43,7 +43,7 @@ function updateOlueScore(userId, score) {
         await saveOlueData(savedData);
     });
     dataUpdateQueue = update.catch((error) => {
-        console.error("Error updating Olue data:", error);
+        console.error("Error updating olue data:", error);
     });
     return update;
 }
@@ -143,7 +143,10 @@ module.exports = {
             return;
         }
         if (storedState.userId !== interaction.user.id) {
-            await interaction.reply({ content: "Only the player who started this game can use these buttons.", ephemeral: true });
+            await interaction.reply({
+                content: "Only the player who started this game can use these buttons.",
+                ephemeral: true,
+            });
             return;
         }
         const userId = storedState.userId;
